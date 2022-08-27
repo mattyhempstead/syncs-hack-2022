@@ -77,6 +77,6 @@ function renderImage() {
     const context = state.canvas.getContext("2d");
     console.log("rendering image");
     console.log(state.imageElement);
-    console.log(img)
-    context.drawImage(img, 0, 0, state.canvas.width, state.canvas.height);
+    console.log(state.imageElement)
+    context.drawImage(state.imageElement, 0, 0, state.canvas.width, state.canvas.height);
 }
