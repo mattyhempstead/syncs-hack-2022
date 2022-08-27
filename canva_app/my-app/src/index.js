@@ -4,9 +4,9 @@ const canva = window.canva.init();
 class ControlAttribute {
   constructor(label, type, values) {
     this.label = label;
-    this.type = type;
-    this.values = values;
-    this.current = "";
+    this.type = type; 
+    this.values = values; // possible values to be passed to AI
+    this.current = ""; // value to be passed to AI
     switch (this.type) {
       case "slider":
         this.control = canva.create("slider", {
@@ -29,7 +29,7 @@ class ControlAttribute {
       case "select":
         this.control = canva.create("select", {
           id: label,
-          value: values[0],
+          value: values,
           options: values
         });
       default:
@@ -50,10 +50,10 @@ const advancedControlAttributes = {
 
 const getControlQueryString = () => {
   let queryString = "";
-  console.log(Object.values(advancedControlAttributes));advancedControlAttributes
   for (let control of Object.values(advancedControlAttributes)) {
-    console.log(control);
-    queryString = queryString + ", " + control.current;
+    if (control.current !== "") {
+      queryString = queryString + ", " + control.current;
+    }
   }
   return queryString
 }
@@ -73,11 +73,11 @@ canva.onReady(async (opts) => {
   renderControls();
 });
 
+// Event listener for all the UI elements
 canva.onControlsEvent(async (opts) => {
   let mval = opts.message.message.value;
   if (opts.message.controlId === "startRemoteImageProcessingButton") {
       console.log("generate image button pressed");
-      console.log(opts);
       canva.toggleSpinner("preview",true);
       console.log("calling canva.remoteProcess with opts:");
       opts = {
@@ -85,7 +85,6 @@ canva.onControlsEvent(async (opts) => {
             caption: state.captionText + " " + getControlQueryString(),
         }),
       };
-      console.log(opts);
       const result = await canva.remoteProcess(opts);
       console.log("received remoteProcess result:");
       console.log(result);
@@ -96,8 +95,6 @@ canva.onControlsEvent(async (opts) => {
 
   } else if (opts.message.controlType === "text_input") {
       console.log("Updating text state");
-      console.log(opts);
-      console.log(state);
       state[opts.message.controlId] = opts.message.message.value;
   } else if (opts.message.controlType === "slider") {
      const advancedControl = advancedControlAttributes[opts.message.controlId];
@@ -113,7 +110,13 @@ canva.onControlsEvent(async (opts) => {
       advancedControl.current = val;
       advancedControl.control.checked = !advancedControl.control.checked;
     }
+  } else if (opts.message.controlType === "select") {
+     const advancedControl = advancedControlAttributes[opts.message.controlId];
+     const val = advancedControlAttributes[opts.message.controlId].values[mval]
+     advancedControl.control.value = opts.message.message.value; 
+     advancedControl.current = val;
   }
+  console.log("Query string:")
   console.log(getControlQueryString());
   //const result = await canva.remoteProcess();
   //console.log(result);
@@ -129,38 +132,8 @@ canva.onSaveRequest(async () => {
     return await imageHelpers.fromCanvas("image/jpeg", canvas);
 });
 
-const createControlsFromAttributes = (attributes) => {
-  if (!state.showAdvancedControls) return [];
-  const advControls = canva.create("group", {
-    id: "AdvancedControls",
-    label: "Advanced Controls",
-    children: []
-  })
-  const controls = [advControls]
-  Object.keys(attributes).map(attr => {
-    if (attributes[attr].length > 1) {
-      control = canva.create("slider", {
-        id: attr,
-        label: attr,
-        value: 0,
-        min: 0,
-        max: attributes[attr].length - 1,
-        step: 1
-      });
-    } else {
-      control = canva.create("checkbox", {
-        id: attr,
-        label: attr,
-        disabled: false,
-        checked: false
-      });
-    }
-    advControls.children.push(control);
-  })
-  return controls;
-}
-
 function renderControls() {
+  // Controls that are always shown
   const mainControls = [
     canva.create("text_input", {
         inputType: "text",
