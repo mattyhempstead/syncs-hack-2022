@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html style="max-width: 100%; max-height: 100%; overflow: hidden">
+  <body style="max-width: 100%; max-height: 100%; margin: 0">
+    <script>
+      // Get the URL and version number of JavaScript client
+      const params = new URLSearchParams(window.location.search);
+      const baseUrl = params.get("libBase");
+      const version = params.get("lib");
+
+      // Construct the URL of the JavaScript client
+      const libUrl = baseUrl + version + ".js";
+
+      // Load the JavaScript client
+      const lib = document.createElement("script");
+      lib.src = libUrl;
+      lib.onload = () => {
+        // Load the JavaScript bundle for the extension
+        const extension = document.createElement("script");
+        extension.src = "index.js";
+        document.body.appendChild(extension);
+      };
+
+      document.head.appendChild(lib);
+    </script>
+  </body>
+</html>
