@@ -1,3 +1,4 @@
+// The example quickstart canva app (u upload this directly to the canva app js upload section)
 // Get helper methods for working with images
 const { imageHelpers } = window.canva;
 
