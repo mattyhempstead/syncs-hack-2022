@@ -44,7 +44,10 @@ const advancedControlAttributes = {
     "In post-impressionist style", "In the style of Van Gogh"]
   ),
   "Anime Style": new ControlAttribute("Anime Style", "checkbox", ["", "In the style of anime"]),
-  "Apocalypse": new ControlAttribute("Apocalypse", "checkbox", ["", "Everything is on fire and there are demons in my butthoole"]),
+  "Synthetic": new ControlAttribute("Synthetic", "checkbox", ["", "Digital art"]),
+  "Apocalypse": new ControlAttribute("Apocalypse", "checkbox", ["", "In hell, demonic, on fire, Ultra 4K"]),
+  "Old": new ControlAttribute("Old", "checkbox", ["", "circa 1920"]),
+  "Realistic": new ControlAttribute("Realistic", "checkbox", ["", "Realistic photo, shot with Nikon d950 sigma 50mm 1.4 lens"]),
   "Art Style": new ControlAttribute("Art Style", "select", ["", "Abstract", "Impressionist", "Pop art", "Cubism", "Surrealism", "Contemporary", "Fantasy"]),
 }
 
@@ -62,10 +65,11 @@ const state = {
   canvas: null,
   imageElement: null,
   captionText: null,
-  showAdvancedControls: false
+  showAdvancedControls: false,
 };
 
 canva.onReady(async (opts) => {
+  //window.localStorage.setItem('hi', 'hello');
   const image = await imageHelpers.fromElement(opts.element, "preview");
   state.canvas = await imageHelpers.toCanvas(image);
   state.imageElement = await imageHelpers.toImageElement(image);
