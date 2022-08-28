@@ -7,6 +7,7 @@ class ControlAttribute {
     this.type = type; 
     this.values = values; // possible values to be passed to AI
     this.current = ""; // value to be passed to AI
+    this.prepend = false;
     switch (this.type) {
       case "slider":
         this.control = canva.create("slider", {
@@ -29,9 +30,16 @@ class ControlAttribute {
       case "select":
         this.control = canva.create("select", {
           id: label,
-          value: values,
+          value: values[0].value,
           options: values
         });
+        break;
+      case "paragraph":
+        this.control = canva.create("paragraph", {
+          id: label,
+          text: values[0]
+        });
+        break;
       default:
         console.log("Invalid type: ", type)
     }
@@ -39,25 +47,63 @@ class ControlAttribute {
 };
 
 const advancedControlAttributes = {
-  "Van-Go": new ControlAttribute("Van-Go", "slider", [
+  "Van-Gogh": new ControlAttribute("Van-Gogh", "slider", [
     "", "With a Van", "In impressionist style",
     "In post-impressionist style", "In the style of Van Gogh"]
   ),
-  "Anime Style": new ControlAttribute("Anime Style", "checkbox", ["", "In the style of anime"]),
-  "Synthetic": new ControlAttribute("Synthetic", "checkbox", ["", "Digital art"]),
   "Apocalypse": new ControlAttribute("Apocalypse", "checkbox", ["", "In hell, demonic, on fire, Ultra 4K"]),
-  "Old": new ControlAttribute("Old", "checkbox", ["", "circa 1920"]),
-  "Realistic": new ControlAttribute("Realistic", "checkbox", ["", "Realistic photo, shot with Nikon d950 sigma 50mm 1.4 lens"]),
-  "Art Style": new ControlAttribute("Art Style", "select", ["", "Abstract", "Impressionist", "Pop art", "Cubism", "Surrealism", "Contemporary", "Fantasy"]),
+  "Hat": new ControlAttribute("Hat", "checkbox", ["", "with a hat"]),
+  "Cheese Mode": new ControlAttribute("Cheese Mode", "checkbox", ["", "cheese everywhere, cheese, so much cheese, made of cheese"]),
+  "Synthetic": new ControlAttribute("Synthetic", "checkbox", ["", "Digital art"]),
 }
+
+const styleObjs = {
+"style": new ControlAttribute("style", "paragraph", ["Image style:"]),
+"Art Style": new ControlAttribute("Art Style", "select", [
+  { value: "", label: "Select an option...", prepend: false },
+  { value: "cartoon", label: "Cartoon", prepend: false },
+  { value: "abstract painting", label: "Abstract", prepend: false },
+  { value: "impressionist painting", label: "Impressionist", prepend: false },
+  { value: "pop art painting of", label: "Pop art", prepend: true },
+  { value: "in the style of cubism", label: "Cubism", prepend:false },
+  { value: "surrealist painting", label: "Surrealism", prepend: false },
+  { value: "contemporary painting of", label: "Contemporary", prepend: true },
+  { value: "fantasy painting of", label: "Fantasy", prepend: true },
+  { value: "Realistic photo, shot with Nikon d950 sigma 50mm 1.4 lens", label: "Realistic", prepend: false },
+  { value: "circa 1920", label: "Old photo", prepend: false},
+  { value: "in the style of anime", label: "Anime", prepend: false},
+]),
+"material": new ControlAttribute("material", "paragraph", ["Material:"]),
+"Material": new ControlAttribute("Material", "select", [
+  { value: "", label: "Select an option...", prepend: false },
+  { value: "made of playdoh", label: "Playdoh", prepend: false },
+  { value: "clay, stop motion animation", label: "Clay", prepend: false },
+  { value: "lego set of", label: "Lego", prepend: true },
+  { value: "oil painting of", label: "Oil painting", prepend: true },
+  { value: "made of cheese", label: "Cheese", prepend: false },
+])}
 
 const getControlQueryString = () => {
   let queryString = "";
   for (let control of Object.values(advancedControlAttributes)) {
     if (control.current !== "") {
-      queryString = queryString + ", " + control.current;
+      if (control.prepend) {
+        queryString = control.current + " " + queryString
+      } else {
+        queryString = queryString + ", " + control.current;
+      }
     }
   }
+  for (let control of Object.values(styleObjs)) {
+    if (control.current !== "") {
+      if (control.prepend) {
+        queryString = control.current + " " + queryString
+      } else {
+        queryString = queryString + ", " + control.current;
+      }
+    }
+  }
+
   return queryString
 }
 
@@ -115,10 +161,16 @@ canva.onControlsEvent(async (opts) => {
       advancedControl.control.checked = !advancedControl.control.checked;
     }
   } else if (opts.message.controlType === "select") {
-     const advancedControl = advancedControlAttributes[opts.message.controlId];
-     const val = advancedControlAttributes[opts.message.controlId].values[mval]
-     advancedControl.control.value = opts.message.message.value; 
-     advancedControl.current = val;
+      const advancedControl = styleObjs[opts.message.controlId];
+      advancedControl.current = opts.message.message.value
+      const options = advancedControl.control.options
+      const option = options.find(el => el.value == opts.message.message.value)
+      advancedControl.prepend = option.prepend
+      
+      
+      //advancedControl.control.value = advancedControl.control.options[ops.message.controlId]
+      advancedControl.control.value = opts.message.message.value
+      console.log(opts)
   }
   console.log("Query string:")
   console.log(getControlQueryString());
@@ -152,21 +204,30 @@ function renderControls() {
       id: "startRemoteImageProcessingButton",
       label: "Generate Image",
     }),
+  ];
+
+  const styleControls = Object.values(styleObjs).map(
+    attr => attr.control
+  );
+
+  const advancedControls = Object.values(advancedControlAttributes).map(
+    attr => attr.control
+  );
+
+  const fullControls = mainControls.concat(styleControls);
+
+  fullControls.push(
     canva.create("checkbox", {
       id: "showAdvancedControlsButton",
       label: "Show Advanced Controls",
       disabled: false,
       checked: state.showAdvancedControls
     }),
-  ];
-
-  const advancedControls = Object.values(advancedControlAttributes).map(
-    attr => attr.control
-  );
+  )
 
   const controls = state.showAdvancedControls
-    ? mainControls.concat(advancedControls)
-    : mainControls
+    ? fullControls.concat(advancedControls)
+    : fullControls
   canva.updateControlPanel(controls);
 }
 
